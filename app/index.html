@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vice Nights — Cover Studio</title>
+<link rel="stylesheet" href="./style.css">
+</head>
+<body>
+<main class="app">
+  <section class="controls" aria-label="Cover controls">
+    <h1>Vice Nights</h1>
+    <p class="tag">Cover Studio — your photo, our sunset, one bold caption.</p>
+
+    <fieldset class="photos">
+      <legend>Photos — one per panel, or one for all three</legend>
+      <div class="slot" data-slot="0">
+        <span class="slot-name">Panel 1 · hero</span>
+        <label>Choose a photo <input type="file" accept="image/*"></label>
+        <span class="samples">
+          <button type="button" data-sample="pier">Sample: pier</button>
+          <button type="button" data-sample="boulevard">Sample: boulevard</button>
+        </span>
+        <button type="button" data-fillall>Use this photo in all panels</button>
+      </div>
+      <div class="slot" data-slot="1">
+        <span class="slot-name">Panel 2</span>
+        <label>Choose a photo <input type="file" accept="image/*"></label>
+        <span class="samples">
+          <button type="button" data-sample="pier">Sample: pier</button>
+          <button type="button" data-sample="boulevard">Sample: boulevard</button>
+        </span>
+        <button type="button" data-fillall>Use this photo in all panels</button>
+      </div>
+      <div class="slot" data-slot="2">
+        <span class="slot-name">Panel 3</span>
+        <label>Choose a photo <input type="file" accept="image/*"></label>
+        <span class="samples">
+          <button type="button" data-sample="pier">Sample: pier</button>
+          <button type="button" data-sample="boulevard">Sample: boulevard</button>
+        </span>
+        <button type="button" data-fillall>Use this photo in all panels</button>
+      </div>
+    </fieldset>
+
+    <fieldset class="crop">
+      <legend>Crop the selected panel — click a panel, then drag it</legend>
+      <div class="panel-pick" role="group" aria-label="Choose a panel to crop">
+        <button type="button" data-panel="0" class="active" aria-pressed="true">Panel 1</button>
+        <button type="button" data-panel="1" aria-pressed="false">Panel 2</button>
+        <button type="button" data-panel="2" aria-pressed="false">Panel 3</button>
+      </div>
+      <label>Zoom <input id="zoom" type="range" min="100" max="300" value="100"></label>
+      <label>Move sideways <input id="panx" type="range" min="-50" max="50" value="0"></label>
+      <label>Move up and down <input id="pany" type="range" min="-50" max="50" value="0"></label>
+    </fieldset>
+
+    <fieldset class="words">
+      <legend>Words</legend>
+      <label>Caption <input id="caption" type="text" maxlength="40" value="Neon Getaway"></label>
+      <label>Tagline <input id="tagline" type="text" maxlength="60" value="One last ride into the sunset"></label>
+    </fieldset>
+
+    <fieldset class="look">
+      <legend>Colour grade</legend>
+      <div class="choices" role="group" aria-label="Colour grade">
+        <button type="button" data-grade="sunset" class="active">Sunset</button>
+        <button type="button" data-grade="neon">Neon</button>
+        <button type="button" data-grade="dusk">Dusk</button>
+      </div>
+    </fieldset>
+
+    <fieldset class="look">
+      <legend>Post size</legend>
+      <div class="choices" role="group" aria-label="Export size">
+        <button type="button" data-size="landscape" class="active">1920 × 1080</button>
+        <button type="button" data-size="square">1080 × 1080</button>
+        <button type="button" data-size="portrait">1080 × 1350</button>
+      </div>
+    </fieldset>
+
+    <button id="export" type="button">Export PNG 1920 × 1080</button>
+    <p id="status" role="status"></p>
+    <p class="fine">Photos stay on your machine — nothing is uploaded. Original art only: no game logos, artwork or fonts.</p>
+  </section>
+  <section class="stage" aria-label="Cover preview">
+    <canvas id="cover" width="1920" height="1080" aria-label="The cover"></canvas>
+  </section>
+</main>
+<script type="module" src="./src/main.js"></script>
+</body>
+</html>
