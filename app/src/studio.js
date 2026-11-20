@@ -1,512 +1,180 @@
-// Vice Nights — Cover Studio: a canvas poster renderer and its editor.
-// One canvas draws the whole poster (three photo panels + a title band) and
-// the same drawing routine exports the PNG and paints the preset thumbnails.
-
-const SIZES = {
-  square: { label: "1080 × 1080 · square", width: 1080, height: 1080 },
-  portrait: { label: "1080 × 1350 · portrait", width: 1080, height: 1350 },
-  wide: { label: "1920 × 1080 · wide", width: 1920, height: 1080 },
-};
-
-// Panel rectangles as fractions of the poster, one layout per post size.
-// Portrait and square stack a hero on top, a title band, and two panels below;
-// wide puts a tall hero on the left and the title band plus two portrait
-// panels in the right column, so faces still fit in a landscape poster.
-const LAYOUTS = {
-  portrait: {
-    hero: { x: 0, y: 0, w: 1, h: 0.5 },
-    left: { x: 0, y: 0.66, w: 0.56, h: 0.34 },
-    right: { x: 0.56, y: 0.66, w: 0.44, h: 0.34 },
-    band: { x: 0, y: 0.5, w: 1, h: 0.16 },
-  },
-  square: {
-    hero: { x: 0, y: 0, w: 1, h: 0.5 },
-    left: { x: 0, y: 0.66, w: 0.56, h: 0.34 },
-    right: { x: 0.56, y: 0.66, w: 0.44, h: 0.34 },
-    band: { x: 0, y: 0.5, w: 1, h: 0.16 },
-  },
-  wide: {
-    hero: { x: 0, y: 0, w: 0.52, h: 1 },
-    left: { x: 0.52, y: 0.26, w: 0.24, h: 0.74 },
-    right: { x: 0.76, y: 0.26, w: 0.24, h: 0.74 },
-    band: { x: 0.52, y: 0, w: 0.48, h: 0.26 },
-  },
-};
-const PANELS = ["hero", "left", "right"];
-
-const SAMPLES = {
-  boulevard: "samples/boulevard.jpg",
-  pier: "samples/pier.jpg",
-};
-
+"use strict";
+// Vice Nights Cover Studio — panel state, drag/zoom, grades and PNG export.
+const SAMPLES = ["samples/boulevard.jpg", "samples/pier.jpg", "samples/beach.jpg", "samples/boulevard.jpg"];
 const GRADES = {
-  sunset: {
-    filter: "saturate(1.3) contrast(1.06) brightness(1.02)",
-    stops: ["rgba(255, 140, 60, 0.20)", "rgba(255, 60, 120, 0.16)", "rgba(120, 40, 180, 0.10)"],
-    blend: "overlay",
-  },
-  neon: {
-    filter: "saturate(1.45) contrast(1.1)",
-    stops: ["rgba(0, 240, 255, 0.16)", "rgba(255, 40, 220, 0.16)", "rgba(90, 40, 255, 0.12)"],
-    blend: "overlay",
-  },
-  dusk: {
-    filter: "saturate(1.1) contrast(1.04) brightness(0.96)",
-    stops: ["rgba(70, 50, 200, 0.20)", "rgba(160, 60, 160, 0.14)", "rgba(20, 10, 60, 0.16)"],
-    blend: "soft-light",
-  },
-  mono: {
-    filter: "grayscale(1) contrast(1.12) brightness(1.03)",
-    stops: ["rgba(255, 255, 255, 0.05)", "rgba(0, 0, 0, 0.08)"],
-    blend: "overlay",
-  },
+  sunset: { filter: "saturate(1.35) contrast(1.08) sepia(0.28) hue-rotate(-8deg)", wash: ["rgba(255,120,40,0.28)", "rgba(255,45,120,0.20)"] },
+  neon: { filter: "saturate(1.6) contrast(1.2) hue-rotate(18deg) brightness(0.94)", wash: ["rgba(0,220,255,0.26)", "rgba(190,40,255,0.30)"] },
+  dusk: { filter: "saturate(0.82) contrast(1.02) brightness(0.86) sepia(0.18) hue-rotate(12deg)", wash: ["rgba(70,60,160,0.30)", "rgba(20,10,50,0.28)"] }
 };
+const poster = document.getElementById("poster");
+const panelEls = Array.from(document.querySelectorAll(".panel"));
+const statusEl = document.getElementById("status");
+const zoomRange = document.getElementById("zoomRange");
+let grade = "sunset";
+let selected = 0;
+const panels = panelEls.map(() => ({ img: null, url: "", x: 0, y: 0, zoom: 1 }));
 
-const TITLE_GRADIENTS = {
-  sunset: ["#ffd166", "#ff5e78", "#c86bff"],
-  neon: ["#7df9ff", "#ff5df2", "#7b61ff"],
-  gold: ["#ffe259", "#ffa751", "#ff7e2e"],
-  mono: ["#ffffff", "#e8e8e8", "#bdbdbd"],
-};
+function say(msg) { statusEl.textContent = msg; }
 
-const PRESETS = {
-  "sunset-boulevard": {
-    size: "portrait", grade: "sunset", titleGradient: "sunset",
-    title: "VICE NIGHTS", subtitle: "A COVER STORY IN THREE PANELS",
-    panels: {
-      hero: { photo: "boulevard", zoom: 1.0, ox: 0, oy: 0.55 },
-      left: { photo: "pier", zoom: 1.2, ox: 0, oy: 0 },
-      right: { photo: "boulevard", zoom: 1.35, ox: 0.08, oy: 0.18 },
-    },
-  },
-  "neon-pier": {
-    size: "wide", grade: "neon", titleGradient: "neon",
-    title: "NEON PIER", subtitle: "MIDNIGHT ON THE BOARDWALK",
-    panels: {
-      hero: { photo: "pier", zoom: 1.15, ox: 0, oy: 0.05 },
-      left: { photo: "boulevard", zoom: 1.3, ox: 0, oy: 0.15 },
-      right: { photo: "pier", zoom: 1.5, ox: 0.05, oy: 0.1 },
-    },
-  },
-  "dusk-mix": {
-    size: "square", grade: "dusk", titleGradient: "gold",
-    title: "DUSK MIX", subtitle: "TWO STREETS, ONE NIGHT",
-    panels: {
-      hero: { photo: "pier", zoom: 1.15, ox: 0, oy: 0.3 },
-      left: { photo: "pier", zoom: 1.4, ox: -0.08, oy: 0.2 },
-      right: { photo: "boulevard", zoom: 1.2, ox: 0, oy: 0.25 },
-    },
-  },
-};
-
-const state = {
-  size: "portrait",
-  grade: "sunset",
-  titleGradient: "sunset",
-  title: "VICE NIGHTS",
-  subtitle: "A COVER STORY IN THREE PANELS",
-  titleScale: 1,
-  activePanel: "hero",
-  panels: {
-    hero: { photo: "boulevard", zoom: 1.0, ox: 0, oy: 0.55 },
-    left: { photo: "pier", zoom: 1.2, ox: 0, oy: 0 },
-    right: { photo: "boulevard", zoom: 1.35, ox: 0.08, oy: 0.18 },
-  },
-};
-
-const canvas = document.getElementById("poster");
-const ctx = canvas.getContext("2d");
-const imageCache = new Map();
-
-function loadPhoto(key) {
-  const src = SAMPLES[key] ?? key;
-  if (!imageCache.has(src)) {
-    const img = new Image();
-    img.src = src;
-    imageCache.set(src, img);
-  }
-  return imageCache.get(src);
+function layoutPanel(i) {
+  const p = panels[i], el = panelEls[i], img = el.querySelector("img");
+  if (!p.img) { img.removeAttribute("src"); return; }
+  if (img.src !== p.url) img.src = p.url;
+  const pw = el.clientWidth, ph = el.clientHeight;
+  const scale = Math.max(pw / p.img.naturalWidth, ph / p.img.naturalHeight) * p.zoom;
+  const w = p.img.naturalWidth * scale, h = p.img.naturalHeight * scale;
+  img.style.width = w + "px";
+  img.style.height = h + "px";
+  img.style.transform = "translate(calc(-50% + " + p.x + "px), calc(-50% + " + p.y + "px))";
 }
 
-function photoReady(key) {
-  const img = loadPhoto(key);
-  return img.complete && img.naturalWidth > 0;
+function layoutAll() { panels.forEach((_, i) => layoutPanel(i)); }
+
+function selectPanel(i) {
+  selected = i;
+  panelEls.forEach((el, j) => el.classList.toggle("selected", j === i));
+  zoomRange.value = String(panels[i].zoom);
 }
 
-function allPhotosReady(panelSet) {
-  return Object.values(panelSet).every((p) => photoReady(p.photo));
-}
-
-// Draw one photo into a panel rect, cover-fit, with zoom and pan offsets.
-// The pan is clamped so the photo always covers the panel: no empty edges,
-// however far the sliders or a drag push it.
-function drawPanelPhoto(target, rect, panel, grade) {
-  const img = loadPhoto(panel.photo);
-  if (!img.complete || img.naturalWidth === 0) return;
-  const { x, y, w, h } = rect;
-  const base = Math.max(w / img.naturalWidth, h / img.naturalHeight);
-  const scale = base * panel.zoom;
-  const dw = img.naturalWidth * scale;
-  const dh = img.naturalHeight * scale;
-  const maxOx = Math.max(0, (dw - w) / 2 / w);
-  const maxOy = Math.max(0, (dh - h) / 2 / h);
-  const ox = Math.max(-maxOx, Math.min(maxOx, panel.ox));
-  const oy = Math.max(-maxOy, Math.min(maxOy, panel.oy));
-  const dx = x + (w - dw) / 2 + ox * w;
-  const dy = y + (h - dh) / 2 + oy * h;
-  target.save();
-  target.beginPath();
-  target.rect(x, y, w, h);
-  target.clip();
-  target.filter = grade.filter;
-  target.drawImage(img, dx, dy, dw, dh);
-  target.restore();
-}
-
-function drawGradeWash(target, width, height, grade) {
-  const wash = target.createLinearGradient(0, 0, width, height);
-  grade.stops.forEach((color, i) => wash.addColorStop(i / (grade.stops.length - 1), color));
-  target.save();
-  target.globalCompositeOperation = grade.blend;
-  target.fillStyle = wash;
-  target.fillRect(0, 0, width, height);
-  target.restore();
-}
-
-function drawTitleBand(target, width, height, snap, layout) {
-  const f = layout.band;
-  const band = {
-    x: f.x * width,
-    y: f.y * height,
-    w: f.w * width,
-    h: f.h * height,
+function loadInto(i, url) {
+  const image = new Image();
+  image.onload = () => {
+    panels[i].img = image; panels[i].url = url;
+    panels[i].x = 0; panels[i].y = 0; panels[i].zoom = 1;
+    if (i === selected) zoomRange.value = "1";
+    layoutPanel(i);
   };
-  target.fillStyle = "#0e0b14";
-  target.fillRect(band.x, band.y, band.w, band.h);
-
-  // Thin gradient rule above the title.
-  const rule = target.createLinearGradient(band.x, 0, band.x + band.w, 0);
-  rule.addColorStop(0, "#ffb347");
-  rule.addColorStop(0.5, "#ff5e78");
-  rule.addColorStop(1, "#b967ff");
-  target.fillStyle = rule;
-  target.fillRect(band.x + width * 0.04, band.y + band.h * 0.1, band.w * 0.92, Math.max(3, height * 0.004));
-
-  const titleSize = height * 0.082 * snap.titleScale;
-  target.font = `900 ${titleSize}px ViceCond, "Arial Narrow", sans-serif`;
-  target.textBaseline = "middle";
-  const titleX = band.x + width * 0.045;
-  const titleY = band.y + band.h * 0.48;
-  const grad = target.createLinearGradient(titleX, 0, titleX + target.measureText(snap.title).width, 0);
-  const colors = TITLE_GRADIENTS[snap.titleGradient];
-  colors.forEach((color, i) => grad.addColorStop(i / (colors.length - 1), color));
-  target.save();
-  target.shadowColor = "rgba(0, 0, 0, 0.5)";
-  target.shadowBlur = height * 0.008;
-  target.shadowOffsetY = height * 0.003;
-  target.lineWidth = Math.max(2, height * 0.003);
-  target.strokeStyle = "rgba(12, 6, 18, 0.9)";
-  target.strokeText(snap.title, titleX, titleY);
-  target.fillStyle = grad;
-  target.fillText(snap.title, titleX, titleY);
-  target.restore();
-
-  const subSize = Math.max(14, height * 0.02);
-  target.font = `700 ${subSize}px ViceCond, "Arial Narrow", sans-serif`;
-  if ("letterSpacing" in target) target.letterSpacing = `${Math.max(2, height * 0.004)}px`;
-  target.fillStyle = "rgba(244, 240, 255, 0.85)";
-  target.fillText(snap.subtitle, titleX, band.y + band.h * 0.84);
-  if ("letterSpacing" in target) target.letterSpacing = "0px";
+  image.src = url;
 }
 
-// The one routine that paints a poster: panels, grade, title band.
-function drawPoster(target, width, height, snap) {
-  const layout = LAYOUTS[snap.size];
-  const grade = GRADES[snap.grade];
-  target.fillStyle = "#0d0b12";
-  target.fillRect(0, 0, width, height);
-  const gutter = Math.max(6, width * 0.012);
-  for (const name of PANELS) {
-    const f = layout[name];
-    const rect = {
-      x: f.x * width + gutter / 2,
-      y: f.y * height + gutter / 2,
-      w: f.w * width - gutter,
-      h: f.h * height - gutter,
-    };
-    drawPanelPhoto(target, rect, snap.panels[name], grade);
-    target.strokeStyle = "rgba(255, 255, 255, 0.16)";
-    target.lineWidth = 1;
-    target.strokeRect(rect.x + 0.5, rect.y + 0.5, rect.w - 1, rect.h - 1);
-  }
-  drawGradeWash(target, width, height, grade);
-  drawTitleBand(target, width, height, snap, layout);
+function loadSamples() {
+  SAMPLES.forEach((src, i) => loadInto(i, src));
+  say("Sample scenes loaded. Drop your own photos onto any panel.");
 }
 
-function snapshot() {
-  return JSON.parse(JSON.stringify(state));
+function readFile(file, done) {
+  const reader = new FileReader();
+  reader.onload = () => done(String(reader.result));
+  reader.readAsDataURL(file);
 }
 
-function render() {
-  const { width, height } = SIZES[state.size];
-  if (canvas.width !== width) canvas.width = width;
-  if (canvas.height !== height) canvas.height = height;
-  drawPoster(ctx, width, height, snapshot());
-  document.getElementById("sizeNote").textContent = SIZES[state.size].label;
-  renderThumbs();
-}
-
-function renderThumbs() {
-  for (const thumb of document.querySelectorAll(".thumb")) {
-    const preset = PRESETS[thumb.dataset.preset];
-    if (!preset || !allPhotosReady(preset.panels)) continue;
-    const tctx = thumb.getContext("2d");
-    const snap = {
-      size: preset.size,
-      grade: preset.grade,
-      titleGradient: preset.titleGradient,
-      title: preset.title,
-      subtitle: preset.subtitle,
-      titleScale: 1,
-      panels: preset.panels,
-    };
-    drawPoster(tctx, thumb.width, thumb.height, snap);
-  }
-}
-
-function applyPreset(name) {
-  const preset = PRESETS[name];
-  if (!preset) return;
-  state.size = preset.size;
-  state.grade = preset.grade;
-  state.titleGradient = preset.titleGradient;
-  state.title = preset.title;
-  state.subtitle = preset.subtitle;
-  state.titleScale = 1;
-  state.panels = JSON.parse(JSON.stringify(preset.panels));
-  syncControls();
-  render();
-}
-
-function setSize(name) {
-  if (!SIZES[name]) return;
-  state.size = name;
-  syncControls();
-  render();
-}
-
-function setGrade(name) {
-  if (!GRADES[name]) return;
-  state.grade = name;
-  syncControls();
-  render();
-}
-
-function syncControls() {
-  for (const btn of document.querySelectorAll("#sizeSeg button")) {
-    btn.classList.toggle("active", btn.dataset.size === state.size);
-  }
-  for (const btn of document.querySelectorAll("#panelSeg button")) {
-    btn.classList.toggle("active", btn.dataset.panel === state.activePanel);
-  }
-  for (const btn of document.querySelectorAll("#gradeSwatches button")) {
-    btn.classList.toggle("active", btn.dataset.grade === state.grade);
-  }
-  const panel = state.panels[state.activePanel];
-  document.getElementById("photoSelect").value = SAMPLES[panel.photo] ? panel.photo : "upload";
-  document.getElementById("zoomRange").value = panel.zoom;
-  document.getElementById("zoomVal").textContent = `${panel.zoom.toFixed(2)}×`;
-  document.getElementById("panXRange").value = panel.ox;
-  document.getElementById("panXVal").textContent = panel.ox.toFixed(2);
-  document.getElementById("panYRange").value = panel.oy;
-  document.getElementById("panYVal").textContent = panel.oy.toFixed(2);
-  document.getElementById("titleInput").value = state.title;
-  document.getElementById("subtitleInput").value = state.subtitle;
-  document.getElementById("titleSizeRange").value = Math.round(state.titleScale * 100);
-  document.getElementById("titleSizeVal").textContent = `${Math.round(state.titleScale * 100)}%`;
-  document.getElementById("titleGradientSelect").value = state.titleGradient;
-}
-
-function exportCover() {
-  return new Promise((resolve, reject) => {
-    render();
-    canvas.toBlob((blob) => {
-      if (!blob) return reject(new Error("export failed"));
-      const reader = new FileReader();
-      reader.onload = () => {
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `vice-nights-${state.size}.png`;
-        a.click();
-        setTimeout(() => URL.revokeObjectURL(url), 5000);
-        resolve({
-          dataUrl: reader.result,
-          width: canvas.width,
-          height: canvas.height,
-          filename: a.download,
-        });
-      };
-      reader.onerror = () => reject(new Error("export read failed"));
-      reader.readAsDataURL(blob);
-    }, "image/png");
+panelEls.forEach((el, i) => {
+  el.addEventListener("click", () => selectPanel(i));
+  el.addEventListener("dragover", (e) => { e.preventDefault(); selectPanel(i); });
+  el.addEventListener("drop", (e) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files && e.dataTransfer.files[0];
+    if (file) readFile(file, (url) => { loadInto(i, url); say("Photo placed in panel " + (i + 1) + "."); });
   });
-}
-
-function panelAt(clientX, clientY) {
-  const box = canvas.getBoundingClientRect();
-  const fx = (clientX - box.left) / box.width;
-  const fy = (clientY - box.top) / box.height;
-  const layout = LAYOUTS[state.size];
-  for (const name of PANELS) {
-    const f = layout[name];
-    if (fx >= f.x && fx < f.x + f.w && fy >= f.y && fy < f.y + f.h) return name;
-  }
-  return null;
-}
-
-function wireControls() {
-  document.getElementById("sizeSeg").addEventListener("click", (e) => {
-    const btn = e.target.closest("button[data-size]");
-    if (btn) setSize(btn.dataset.size);
-  });
-  document.getElementById("panelSeg").addEventListener("click", (e) => {
-    const btn = e.target.closest("button[data-panel]");
-    if (!btn) return;
-    state.activePanel = btn.dataset.panel;
-    syncControls();
-  });
-  document.getElementById("gradeSwatches").addEventListener("click", (e) => {
-    const btn = e.target.closest("button[data-grade]");
-    if (btn) setGrade(btn.dataset.grade);
-  });
-  document.getElementById("photoSelect").addEventListener("change", (e) => {
-    const value = e.target.value;
-    if (value === "upload") return;
-    state.panels[state.activePanel].photo = value;
-    render();
-  });
-  document.getElementById("photoUpload").addEventListener("change", (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      state.panels[state.activePanel].photo = reader.result;
-      const select = document.getElementById("photoSelect");
-      if (!select.querySelector('option[value="upload"]')) {
-        const opt = document.createElement("option");
-        opt.value = "upload";
-        opt.textContent = "Your upload";
-        select.appendChild(opt);
-      }
-      select.value = "upload";
-      render();
-    };
-    reader.readAsDataURL(file);
-  });
-  const bindRange = (id, apply) => {
-    document.getElementById(id).addEventListener("input", (e) => {
-      apply(parseFloat(e.target.value));
-      render();
-    });
-  };
-  bindRange("zoomRange", (v) => { state.panels[state.activePanel].zoom = v; syncControls(); });
-  bindRange("panXRange", (v) => { state.panels[state.activePanel].ox = v; syncControls(); });
-  bindRange("panYRange", (v) => { state.panels[state.activePanel].oy = v; syncControls(); });
-  bindRange("titleSizeRange", (v) => { state.titleScale = v / 100; syncControls(); });
-  document.getElementById("titleInput").addEventListener("input", (e) => {
-    state.title = e.target.value.toUpperCase();
-    render();
-  });
-  document.getElementById("subtitleInput").addEventListener("input", (e) => {
-    state.subtitle = e.target.value.toUpperCase();
-    render();
-  });
-  document.getElementById("titleGradientSelect").addEventListener("change", (e) => {
-    state.titleGradient = e.target.value;
-    render();
-  });
-  document.getElementById("exportBtn").addEventListener("click", () => {
-    exportCover().catch((err) => console.error(err));
-  });
-  document.getElementById("surpriseBtn").addEventListener("click", () => {
-    const grades = Object.keys(GRADES);
-    const gradients = Object.keys(TITLE_GRADIENTS);
-    const photos = Object.keys(SAMPLES);
-    const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
-    state.grade = pick(grades);
-    state.titleGradient = pick(gradients);
-    for (const name of Object.keys(state.panels)) {
-      state.panels[name].photo = pick(photos);
-      state.panels[name].zoom = 1.05 + Math.random() * 0.45;
-      state.panels[name].ox = (Math.random() - 0.5) * 0.4;
-      state.panels[name].oy = (Math.random() - 0.5) * 0.4;
-    }
-    syncControls();
-    render();
-  });
-  document.getElementById("gallery").addEventListener("click", (e) => {
-    const thumb = e.target.closest(".thumb");
-    if (thumb) applyPreset(thumb.dataset.preset);
-  });
-
-  // Drag a photo inside its panel to pan it; a plain click selects the panel.
   let drag = null;
-  canvas.addEventListener("pointerdown", (e) => {
-    const name = panelAt(e.clientX, e.clientY);
-    if (!name) return;
-    canvas.setPointerCapture(e.pointerId);
-    drag = { panel: name, x: e.clientX, y: e.clientY, moved: false };
-    state.activePanel = name;
-    syncControls();
+  el.addEventListener("pointerdown", (e) => {
+    selectPanel(i);
+    drag = { x: e.clientX, y: e.clientY, px: panels[i].x, py: panels[i].y };
+    el.setPointerCapture(e.pointerId);
   });
-  canvas.addEventListener("pointermove", (e) => {
+  el.addEventListener("pointermove", (e) => {
     if (!drag) return;
-    const box = canvas.getBoundingClientRect();
-    const f = LAYOUTS[state.size][drag.panel];
-    const dx = (e.clientX - drag.x) / box.width / f.w;
-    const dy = (e.clientY - drag.y) / box.height / f.h;
-    if (Math.abs(e.clientX - drag.x) + Math.abs(e.clientY - drag.y) > 4) drag.moved = true;
-    if (!drag.moved) return;
-    const panel = state.panels[drag.panel];
-    panel.ox = Math.max(-0.6, Math.min(0.6, panel.ox + dx));
-    panel.oy = Math.max(-0.6, Math.min(0.6, panel.oy + dy));
-    drag.x = e.clientX;
-    drag.y = e.clientY;
-    syncControls();
-    render();
+    panels[i].x = drag.px + (e.clientX - drag.x);
+    panels[i].y = drag.py + (e.clientY - drag.y);
+    layoutPanel(i);
   });
-  const endDrag = () => { drag = null; };
-  canvas.addEventListener("pointerup", endDrag);
-  canvas.addEventListener("pointercancel", endDrag);
+  el.addEventListener("pointerup", () => { drag = null; });
+  el.addEventListener("pointercancel", () => { drag = null; });
+});
+
+document.getElementById("panelFile").addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (file) readFile(file, (url) => { loadInto(selected, url); say("Photo placed in panel " + (selected + 1) + "."); });
+  e.target.value = "";
+});
+document.getElementById("fillFile").addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (file) readFile(file, (url) => { panels.forEach((_, i) => loadInto(i, url)); say("One photo now fills every panel."); });
+  e.target.value = "";
+});
+document.getElementById("samplesBtn").addEventListener("click", loadSamples);
+zoomRange.addEventListener("input", () => {
+  panels[selected].zoom = Number(zoomRange.value);
+  layoutPanel(selected);
+});
+const captionInput = document.getElementById("captionInput");
+const taglineInput = document.getElementById("taglineInput");
+captionInput.addEventListener("input", () => {
+  document.getElementById("coverCaption").textContent = captionInput.value || " ";
+});
+taglineInput.addEventListener("input", () => {
+  document.getElementById("coverTagline").textContent = taglineInput.value || " ";
+});
+document.querySelectorAll(".gradeBtn").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    grade = btn.dataset.grade;
+    poster.className = "poster grade-" + grade;
+    document.querySelectorAll(".gradeBtn").forEach((b) => b.classList.toggle("active", b === btn));
+    say("Grade applied: " + btn.textContent + ".");
+  });
+});
+
+function drawCover(ctx, W, H) {
+  const cols = 2, rows = 2, gap = Math.round(W * 0.006);
+  const pw = (W - gap * (cols + 1)) / cols;
+  const ph = (H - gap * (rows + 1)) / rows;
+  ctx.fillStyle = "#000";
+  ctx.fillRect(0, 0, W, H);
+  ctx.save();
+  ctx.filter = GRADES[grade].filter;
+  panels.forEach((p, i) => {
+    if (!p.img) return;
+    const cx = gap + (i % cols) * (pw + gap), cy = gap + Math.floor(i / cols) * (ph + gap);
+    ctx.save();
+    ctx.beginPath(); ctx.rect(cx, cy, pw, ph); ctx.clip();
+    const scale = Math.max(pw / p.img.naturalWidth, ph / p.img.naturalHeight) * p.zoom;
+    const w = p.img.naturalWidth * scale, h = p.img.naturalHeight * scale;
+    const sx = poster.clientWidth ? pw / panelEls[i].clientWidth : 1;
+    ctx.drawImage(p.img, cx + pw / 2 - w / 2 + p.x * sx, cy + ph / 2 - h / 2 + p.y * sx, w, h);
+    ctx.restore();
+  });
+  ctx.restore();
+  const wash = ctx.createLinearGradient(0, 0, W, H);
+  wash.addColorStop(0, GRADES[grade].wash[0]);
+  wash.addColorStop(1, GRADES[grade].wash[1]);
+  ctx.globalCompositeOperation = "overlay";
+  ctx.fillStyle = wash; ctx.fillRect(0, 0, W, H);
+  ctx.globalCompositeOperation = "source-over";
+  const shade = ctx.createLinearGradient(0, H * 0.62, 0, H);
+  shade.addColorStop(0, "rgba(5,2,12,0)");
+  shade.addColorStop(0.55, "rgba(5,2,12,0.88)");
+  ctx.fillStyle = shade; ctx.fillRect(0, H * 0.62, W, H * 0.38);
+  ctx.textAlign = "center";
+  ctx.fillStyle = "#ffffff";
+  try { ctx.letterSpacing = "2px"; } catch (e) { /* older canvas */ }
+  ctx.font = "900 " + Math.round(H * 0.105) + "px 'Cover Display', sans-serif";
+  ctx.shadowColor = "#ff2e88"; ctx.shadowOffsetY = Math.round(H * 0.006); ctx.shadowBlur = 0;
+  const caption = (captionInput.value || "VICE NIGHTS").toUpperCase();
+  ctx.fillText(caption, W / 2, H * 0.93, W * 0.94);
+  ctx.shadowColor = "transparent"; ctx.shadowOffsetY = 0;
+  ctx.fillStyle = "#ffd23f";
+  ctx.font = "700 " + Math.round(H * 0.032) + "px 'Cover Display', sans-serif";
+  ctx.fillText((taglineInput.value || "").toUpperCase(), W / 2, H * 0.975, W * 0.94);
 }
 
-async function boot() {
-  wireControls();
-  syncControls();
-  try {
-    await Promise.all([
-      document.fonts.load('900 100px ViceCond'),
-      document.fonts.load('700 40px ViceCond'),
-      ...Object.keys(SAMPLES).map((key) => new Promise((resolve) => {
-        const img = loadPhoto(key);
-        if (img.complete) resolve();
-        else { img.onload = resolve; img.onerror = resolve; }
-      })),
-    ]);
-  } catch (err) {
-    console.warn("font/photo preload", err);
-  }
-  render();
-  window.viceStudio = {
-    state,
-    setSize,
-    setGrade,
-    applyPreset,
-    exportCover,
-    render,
-    ready: true,
-  };
+function exportPNG(W, H) {
+  const canvas = document.createElement("canvas");
+  canvas.width = W; canvas.height = H;
+  drawCover(canvas.getContext("2d"), W, H);
+  const a = document.createElement("a");
+  a.download = "vice-nights-cover-" + W + "x" + H + ".png";
+  a.href = canvas.toDataURL("image/png");
+  a.click();
+  say("Exported PNG at " + W + " x " + H + ".");
+  return canvas;
 }
-
-boot();
+document.querySelectorAll("[data-export]").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const parts = btn.dataset.export.split("x").map(Number);
+    exportPNG(parts[0], parts[1]);
+  });
+});
+window.__coverStudio = { exportPNG, loadInto, selectPanel, panels, setGrade: (g) => { grade = g; poster.className = "poster grade-" + g; } };
+window.addEventListener("resize", layoutAll);
+selectPanel(0);
+loadSamples();

@@ -1,125 +1,69 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Vice Nights — Cover Studio</title>
+<title>Vice Nights Cover Studio</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <header class="topbar">
-  <div class="brand">
-    <span class="brand-mark">VN</span>
-    <div>
-      <h1>Vice Nights <span>Cover Studio</span></h1>
-      <p class="tagline">Turn your photos into GTA-style multi-panel cover art.</p>
-    </div>
-  </div>
-  <div class="top-actions">
-    <button id="surpriseBtn" class="btn ghost" type="button">Surprise me</button>
-    <button id="exportBtn" class="btn primary" type="button">Export PNG</button>
-  </div>
+  <h1>Vice Nights <span>Cover Studio</span></h1>
+  <p class="hint">Click a panel to select it. Drag inside a panel to reposition its photo.</p>
 </header>
-
 <main class="layout">
-  <aside class="controls" aria-label="Cover controls">
-    <section class="group">
-      <h2>Post size</h2>
-      <div class="seg" id="sizeSeg" role="group" aria-label="Post size">
-        <button type="button" data-size="square">Square<br><small>1080 &times; 1080</small></button>
-        <button type="button" data-size="portrait" class="active">Portrait<br><small>1080 &times; 1350</small></button>
-        <button type="button" data-size="wide">Wide<br><small>1920 &times; 1080</small></button>
-      </div>
-    </section>
-
-    <section class="group">
-      <h2>Panel</h2>
-      <div class="seg" id="panelSeg" role="group" aria-label="Active panel">
-        <button type="button" data-panel="hero" class="active">Hero</button>
-        <button type="button" data-panel="left">Left</button>
-        <button type="button" data-panel="right">Right</button>
-      </div>
-      <label class="field">Photo
-        <select id="photoSelect">
-          <option value="boulevard">Boulevard &mdash; sample</option>
-          <option value="pier">Pier &mdash; sample</option>
-        </select>
-      </label>
-      <label class="field">Or upload your own
-        <input id="photoUpload" type="file" accept="image/*">
-      </label>
-      <label class="field">Zoom <span class="val" id="zoomVal">1.00&times;</span>
-        <input id="zoomRange" type="range" min="1" max="2.4" step="0.01" value="1">
-      </label>
-      <label class="field">Pan left / right <span class="val" id="panXVal">0</span>
-        <input id="panXRange" type="range" min="-0.6" max="0.6" step="0.01" value="0">
-      </label>
-      <label class="field">Pan up / down <span class="val" id="panYVal">0.55</span>
-        <input id="panYRange" type="range" min="-0.6" max="0.6" step="0.01" value="0.55">
-      </label>
-      <p class="hint">Tip: drag the photo inside the poster to move it too.</p>
-    </section>
-
-    <section class="group">
-      <h2>Caption</h2>
-      <label class="field">Title
-        <input id="titleInput" type="text" value="VICE NIGHTS" maxlength="24">
-      </label>
-      <label class="field">Subtitle
-        <input id="subtitleInput" type="text" value="A COVER STORY IN THREE PANELS" maxlength="48">
-      </label>
-      <label class="field">Title size <span class="val" id="titleSizeVal">100%</span>
-        <input id="titleSizeRange" type="range" min="70" max="130" step="1" value="100">
-      </label>
-      <label class="field">Title colour
-        <select id="titleGradientSelect">
-          <option value="sunset">Sunset &mdash; amber to pink</option>
-          <option value="neon">Neon &mdash; cyan to magenta</option>
-          <option value="gold">Gold &mdash; honey to amber</option>
-          <option value="mono">Mono &mdash; white to silver</option>
-        </select>
-      </label>
-    </section>
-
-    <section class="group">
-      <h2>Colour grade</h2>
-      <div class="swatches" id="gradeSwatches" role="group" aria-label="Colour grade">
-        <button type="button" data-grade="sunset" class="active"><span class="dot sunset"></span>Sunset</button>
-        <button type="button" data-grade="neon"><span class="dot neon"></span>Neon</button>
-        <button type="button" data-grade="dusk"><span class="dot dusk"></span>Dusk</button>
-        <button type="button" data-grade="mono"><span class="dot mono"></span>Mono</button>
-      </div>
-    </section>
-  </aside>
-
   <section class="stage">
-    <div class="poster-wrap">
-      <canvas id="poster" width="1080" height="1350"></canvas>
-    </div>
-    <p class="stage-note"><span id="sizeNote">1080 &times; 1350 &middot; portrait</span> &middot; click a panel to edit it &middot; export writes a PNG at full size</p>
-
-    <h2 class="gallery-title">Try a preset</h2>
-    <div class="gallery" id="gallery">
-      <figure>
-        <canvas class="thumb" data-preset="sunset-boulevard" width="240" height="300"></canvas>
-        <figcaption>Sunset Boulevard</figcaption>
-      </figure>
-      <figure>
-        <canvas class="thumb" data-preset="neon-pier" width="240" height="135"></canvas>
-        <figcaption>Neon Pier</figcaption>
-      </figure>
-      <figure>
-        <canvas class="thumb" data-preset="dusk-mix" width="240" height="240"></canvas>
-        <figcaption>Dusk Mix</figcaption>
-      </figure>
+    <div id="poster" class="poster grade-sunset">
+      <div class="panel" data-panel="0"><img alt="Panel 1 photo"><span class="badge">1</span></div>
+      <div class="panel" data-panel="1"><img alt="Panel 2 photo"><span class="badge">2</span></div>
+      <div class="panel" data-panel="2"><img alt="Panel 3 photo"><span class="badge">3</span></div>
+      <div class="panel" data-panel="3"><img alt="Panel 4 photo"><span class="badge">4</span></div>
+      <div class="titleblock">
+        <div id="coverCaption" class="caption">VICE NIGHTS</div>
+        <div id="coverTagline" class="tagline">One city. Every story.</div>
+      </div>
+      <div class="gradewash"></div>
     </div>
   </section>
+  <aside class="controls">
+    <label class="field">Main caption
+      <input id="captionInput" type="text" value="VICE NIGHTS" maxlength="28">
+    </label>
+    <label class="field">Tagline
+      <input id="taglineInput" type="text" value="One city. Every story." maxlength="48">
+    </label>
+    <div class="group">
+      <h2>Selected panel photo</h2>
+      <label class="btn">Choose photo for panel
+        <input id="panelFile" type="file" accept="image/*" hidden>
+      </label>
+      <label class="btn">Fill all panels with one photo
+        <input id="fillFile" type="file" accept="image/*" hidden>
+      </label>
+      <button id="samplesBtn" type="button">Reload sample scenes</button>
+    </div>
+    <label class="field">Zoom (selected panel)
+      <input id="zoomRange" type="range" min="1" max="3" step="0.01" value="1">
+    </label>
+    <div class="group">
+      <h2>Colour grade</h2>
+      <div class="row">
+        <button type="button" data-grade="sunset" class="gradeBtn active">Sunset Warm</button>
+        <button type="button" data-grade="neon" class="gradeBtn">Neon Night</button>
+        <button type="button" data-grade="dusk" class="gradeBtn">Dusky Haze</button>
+      </div>
+    </div>
+    <div class="group">
+      <h2>Export PNG</h2>
+      <div class="row">
+        <button type="button" data-export="1920x1080">1920 x 1080</button>
+        <button type="button" data-export="1080x1080">1080 x 1080</button>
+        <button type="button" data-export="1080x1350">1080 x 1350</button>
+      </div>
+      <p id="status" class="status">Samples loaded. Make it yours.</p>
+    </div>
+  </aside>
 </main>
-
-<footer class="foot">
-  <p>Vice Nights Cover Studio &middot; photos stay on your machine &middot; fonts: Noto Sans Display (SIL OFL) &middot; sample photos made for make.fun, free to use</p>
-</footer>
-
-<script type="module" src="src/studio.js"></script>
+<script src="src/studio.js"></script>
 </body>
 </html>

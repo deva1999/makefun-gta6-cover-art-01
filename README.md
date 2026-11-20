@@ -1,50 +1,36 @@
-[![gta6-cover-art-01](https://make.fun/badge/gta6-cover-art-01.svg)](https://make.fun/c/gta6-cover-art-01)
-[![rank](https://make.fun/badge/gta6-cover-art-01/deva1999/makefun-gta6-cover-art-01/rank.svg)](https://make.fun/c/gta6-cover-art-01)
-[![reward](https://make.fun/badge/gta6-cover-art-01/deva1999/makefun-gta6-cover-art-01/reward.svg)](https://make.fun/c/gta6-cover-art-01)
+# Vice Nights Cover Studio
 
-# Vice Nights — Cover Studio
+An original multi-panel cover art maker inspired by big open-world game
+covers. Build a poster from your own photos, grade it, caption it, and
+export a print-ready PNG — entirely offline, in the browser.
 
-A web app that turns your photos into GTA-style multi-panel cover art, in the
-spirit of GTA 6's posters: three photo panels, bold gradient caption lettering,
-and a Vice City sunset or neon colour grade, exported as a PNG to share.
+## Run the app
 
-## What it does
+Open `app/index.html` in desktop Chrome. There is no build step and the
+app makes no network requests: every font, sample image and script is a
+local file.
 
-- **Three panels, one poster.** A large hero panel on top and two panels below.
-  Fill them with one photo or several: the two included sample photos
-  (Boulevard, Pier) or any photo from your own machine.
-- **Crop and position each photo.** Zoom and pan sliders per panel, or drag the
-  photo right inside the poster.
-- **Write the caption.** An editable bold title and subtitle, with size and
-  colour-gradient controls.
-- **Pick a grade.** Sunset, Neon, Dusk, and Mono colour grades, applied across
-  the whole poster.
-- **Post sizes.** Square 1080 × 1080, portrait 1080 × 1350, and wide
-  1920 × 1080, with one-click export to PNG at full size.
-- **Presets.** Three one-click starting points (Sunset Boulevard, Neon Pier,
-  Dusk Mix) shown as a gallery under the poster.
+## What you can do
 
-## How to try it
+- Four photo panels. Click a panel to select it, then use the file picker
+  or drag and drop a photo onto it.
+- Fill every panel with a single photo, or give each panel its own photo.
+- Drag inside a panel to reposition its photo; use the zoom slider to
+  crop tighter or looser on the selected panel.
+- Edit the main caption and the tagline — both are drawn onto the cover.
+- Pick a colour grade: Sunset Warm, Neon Night or Dusky Haze.
+- Export the finished cover as PNG at 1920x1080, 1080x1080 or 1080x1350.
 
-```sh
-node serve.ts
-```
+Built-in sample scenes (a boulevard, a pier and a beach at dusk) are
+drawn artwork generated for this project, so the studio looks alive
+before you add any photos of your own. All artwork is original; no
+third-party logos, fonts or artwork are used. The display type is
+Noto Sans Display Condensed, licensed under the SIL Open Font License
+1.1 (see `app/fonts/OFL.txt`).
 
-Then open http://localhost:8080 in a desktop browser. Everything runs
-offline from the static files under `app/` — no network requests, and photos
-never leave your machine.
+## Build the dossier
 
-## How it is built
+    MAKEFUN_OUTPUT_DIR=./out node main.ts
 
-- `app/index.html` — the editor page: controls, poster canvas, preset gallery.
-- `app/style.css` — the dark studio theme.
-- `app/src/studio.js` — the whole app: one canvas routine draws the poster,
-  exports the PNG, and paints the preset thumbnails.
-- `app/fonts/` — Noto Sans Display Condensed (SIL Open Font License).
-- `app/samples/` — two sample photos made for make.fun, free to use.
-- `main.ts` — hands the app in: copies `app/` and `screenshots/` to the
-  output and writes `dossier.json` with the kit's `buildDossier`.
-
-## License
-
-MIT. See [LICENSE](LICENSE).
+This copies `app/` and `screenshots/` into the output directory and
+writes a deterministic `dossier.json` there.
