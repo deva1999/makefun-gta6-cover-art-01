@@ -1,36 +1,18 @@
-# Vice Nights Cover Studio
+# makefun-gta6-cover-art-01
 
-An original multi-panel cover art maker inspired by big open-world game
-covers. Build a poster from your own photos, grade it, caption it, and
-export a print-ready PNG — entirely offline, in the browser.
+[![make.fun · gta6-cover-art-01](https://make.fun/badge/gta6-cover-art-01.svg)](https://make.fun/bounty/gta6-cover-art-01?utm_source=github&utm_medium=readme&utm_campaign=gta6-cover-art-01)
+[![rank](https://make.fun/badge/gta6-cover-art-01/deva1999/makefun-gta6-cover-art-01/rank.svg)](https://make.fun/bounty/gta6-cover-art-01/leaderboard?utm_source=github&utm_medium=readme&utm_campaign=gta6-cover-art-01)
+[![reward](https://make.fun/badge/gta6-cover-art-01/deva1999/makefun-gta6-cover-art-01/reward.svg)](https://make.fun/bounty/gta6-cover-art-01?utm_source=github&utm_medium=readme&utm_campaign=gta6-cover-art-01)
 
-## Run the app
+Vice Nights Cover Studio is an offline web app that turns any photo and caption into multi-panel GTA 6-style cover art. Three procedural sample scenes (a neon night chase, a golden-hour boulevard portrait and a sunset heist) fill three photo panels you can crop, zoom and reposition one by one — or fill all three with a single photo. Pick a layout, a colour grade (sunset gold, neon nights or dusk noir), write your caption and tagline, and export a real PNG in wide 1920×1080, square 1080×1080 or portrait 1080×1350. Everything runs from static files in your browser: photos never leave your machine, and every scene is drawn in code — no game artwork, logos or fonts.
 
-Open `app/index.html` in desktop Chrome. There is no build step and the
-app makes no network requests: every font, sample image and script is a
-local file.
+## Run it
 
-## What you can do
+```sh
+node serve.ts
+# then open http://localhost:8080
+```
 
-- Four photo panels. Click a panel to select it, then use the file picker
-  or drag and drop a photo onto it.
-- Fill every panel with a single photo, or give each panel its own photo.
-- Drag inside a panel to reposition its photo; use the zoom slider to
-  crop tighter or looser on the selected panel.
-- Edit the main caption and the tagline — both are drawn onto the cover.
-- Pick a colour grade: Sunset Warm, Neon Night or Dusky Haze.
-- Export the finished cover as PNG at 1920x1080, 1080x1080 or 1080x1350.
+---
 
-Built-in sample scenes (a boulevard, a pier and a beach at dusk) are
-drawn artwork generated for this project, so the studio looks alive
-before you add any photos of your own. All artwork is original; no
-third-party logos, fonts or artwork are used. The display type is
-Noto Sans Display Condensed, licensed under the SIL Open Font License
-1.1 (see `app/fonts/OFL.txt`).
-
-## Build the dossier
-
-    MAKEFUN_OUTPUT_DIR=./out node main.ts
-
-This copies `app/` and `screenshots/` into the output directory and
-writes a deterministic `dossier.json` there.
+<sub>Entered on [make.fun](https://make.fun/?ref=gx4yrk51&utm_source=github&utm_medium=readme&utm_campaign=gta6-cover-art-01) · AI agents build software for cash rewards</sub>
