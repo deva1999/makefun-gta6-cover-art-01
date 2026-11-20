@@ -4,89 +4,122 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Vice Nights — Cover Studio</title>
-<link rel="stylesheet" href="./style.css">
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-<main class="app">
-  <section class="controls" aria-label="Cover controls">
-    <h1>Vice Nights</h1>
-    <p class="tag">Cover Studio — your photo, our sunset, one bold caption.</p>
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark">VN</span>
+    <div>
+      <h1>Vice Nights <span>Cover Studio</span></h1>
+      <p class="tagline">Turn your photos into GTA-style multi-panel cover art.</p>
+    </div>
+  </div>
+  <div class="top-actions">
+    <button id="surpriseBtn" class="btn ghost" type="button">Surprise me</button>
+    <button id="exportBtn" class="btn primary" type="button">Export PNG</button>
+  </div>
+</header>
 
-    <fieldset class="photos">
-      <legend>Photos — one per panel, or one for all three</legend>
-      <div class="slot" data-slot="0">
-        <span class="slot-name">Panel 1 · hero</span>
-        <label>Choose a photo <input type="file" accept="image/*"></label>
-        <span class="samples">
-          <button type="button" data-sample="pier">Sample: pier</button>
-          <button type="button" data-sample="boulevard">Sample: boulevard</button>
-        </span>
-        <button type="button" data-fillall>Use this photo in all panels</button>
+<main class="layout">
+  <aside class="controls" aria-label="Cover controls">
+    <section class="group">
+      <h2>Post size</h2>
+      <div class="seg" id="sizeSeg" role="group" aria-label="Post size">
+        <button type="button" data-size="square">Square<br><small>1080 &times; 1080</small></button>
+        <button type="button" data-size="portrait" class="active">Portrait<br><small>1080 &times; 1350</small></button>
+        <button type="button" data-size="wide">Wide<br><small>1920 &times; 1080</small></button>
       </div>
-      <div class="slot" data-slot="1">
-        <span class="slot-name">Panel 2</span>
-        <label>Choose a photo <input type="file" accept="image/*"></label>
-        <span class="samples">
-          <button type="button" data-sample="pier">Sample: pier</button>
-          <button type="button" data-sample="boulevard">Sample: boulevard</button>
-        </span>
-        <button type="button" data-fillall>Use this photo in all panels</button>
-      </div>
-      <div class="slot" data-slot="2">
-        <span class="slot-name">Panel 3</span>
-        <label>Choose a photo <input type="file" accept="image/*"></label>
-        <span class="samples">
-          <button type="button" data-sample="pier">Sample: pier</button>
-          <button type="button" data-sample="boulevard">Sample: boulevard</button>
-        </span>
-        <button type="button" data-fillall>Use this photo in all panels</button>
-      </div>
-    </fieldset>
+    </section>
 
-    <fieldset class="crop">
-      <legend>Crop the selected panel — click a panel, then drag it</legend>
-      <div class="panel-pick" role="group" aria-label="Choose a panel to crop">
-        <button type="button" data-panel="0" class="active" aria-pressed="true">Panel 1</button>
-        <button type="button" data-panel="1" aria-pressed="false">Panel 2</button>
-        <button type="button" data-panel="2" aria-pressed="false">Panel 3</button>
+    <section class="group">
+      <h2>Panel</h2>
+      <div class="seg" id="panelSeg" role="group" aria-label="Active panel">
+        <button type="button" data-panel="hero" class="active">Hero</button>
+        <button type="button" data-panel="left">Left</button>
+        <button type="button" data-panel="right">Right</button>
       </div>
-      <label>Zoom <input id="zoom" type="range" min="100" max="300" value="100"></label>
-      <label>Move sideways <input id="panx" type="range" min="-50" max="50" value="0"></label>
-      <label>Move up and down <input id="pany" type="range" min="-50" max="50" value="0"></label>
-    </fieldset>
+      <label class="field">Photo
+        <select id="photoSelect">
+          <option value="boulevard">Boulevard &mdash; sample</option>
+          <option value="pier">Pier &mdash; sample</option>
+        </select>
+      </label>
+      <label class="field">Or upload your own
+        <input id="photoUpload" type="file" accept="image/*">
+      </label>
+      <label class="field">Zoom <span class="val" id="zoomVal">1.00&times;</span>
+        <input id="zoomRange" type="range" min="1" max="2.4" step="0.01" value="1">
+      </label>
+      <label class="field">Pan left / right <span class="val" id="panXVal">0</span>
+        <input id="panXRange" type="range" min="-0.6" max="0.6" step="0.01" value="0">
+      </label>
+      <label class="field">Pan up / down <span class="val" id="panYVal">0.55</span>
+        <input id="panYRange" type="range" min="-0.6" max="0.6" step="0.01" value="0.55">
+      </label>
+      <p class="hint">Tip: drag the photo inside the poster to move it too.</p>
+    </section>
 
-    <fieldset class="words">
-      <legend>Words</legend>
-      <label>Caption <input id="caption" type="text" maxlength="40" value="Neon Getaway"></label>
-      <label>Tagline <input id="tagline" type="text" maxlength="60" value="One last ride into the sunset"></label>
-    </fieldset>
+    <section class="group">
+      <h2>Caption</h2>
+      <label class="field">Title
+        <input id="titleInput" type="text" value="VICE NIGHTS" maxlength="24">
+      </label>
+      <label class="field">Subtitle
+        <input id="subtitleInput" type="text" value="A COVER STORY IN THREE PANELS" maxlength="48">
+      </label>
+      <label class="field">Title size <span class="val" id="titleSizeVal">100%</span>
+        <input id="titleSizeRange" type="range" min="70" max="130" step="1" value="100">
+      </label>
+      <label class="field">Title colour
+        <select id="titleGradientSelect">
+          <option value="sunset">Sunset &mdash; amber to pink</option>
+          <option value="neon">Neon &mdash; cyan to magenta</option>
+          <option value="gold">Gold &mdash; honey to amber</option>
+          <option value="mono">Mono &mdash; white to silver</option>
+        </select>
+      </label>
+    </section>
 
-    <fieldset class="look">
-      <legend>Colour grade</legend>
-      <div class="choices" role="group" aria-label="Colour grade">
-        <button type="button" data-grade="sunset" class="active">Sunset</button>
-        <button type="button" data-grade="neon">Neon</button>
-        <button type="button" data-grade="dusk">Dusk</button>
+    <section class="group">
+      <h2>Colour grade</h2>
+      <div class="swatches" id="gradeSwatches" role="group" aria-label="Colour grade">
+        <button type="button" data-grade="sunset" class="active"><span class="dot sunset"></span>Sunset</button>
+        <button type="button" data-grade="neon"><span class="dot neon"></span>Neon</button>
+        <button type="button" data-grade="dusk"><span class="dot dusk"></span>Dusk</button>
+        <button type="button" data-grade="mono"><span class="dot mono"></span>Mono</button>
       </div>
-    </fieldset>
+    </section>
+  </aside>
 
-    <fieldset class="look">
-      <legend>Post size</legend>
-      <div class="choices" role="group" aria-label="Export size">
-        <button type="button" data-size="landscape" class="active">1920 × 1080</button>
-        <button type="button" data-size="square">1080 × 1080</button>
-        <button type="button" data-size="portrait">1080 × 1350</button>
-      </div>
-    </fieldset>
+  <section class="stage">
+    <div class="poster-wrap">
+      <canvas id="poster" width="1080" height="1350"></canvas>
+    </div>
+    <p class="stage-note"><span id="sizeNote">1080 &times; 1350 &middot; portrait</span> &middot; click a panel to edit it &middot; export writes a PNG at full size</p>
 
-    <button id="export" type="button">Export PNG 1920 × 1080</button>
-    <p id="status" role="status"></p>
-    <p class="fine">Photos stay on your machine — nothing is uploaded. Original art only: no game logos, artwork or fonts.</p>
-  </section>
-  <section class="stage" aria-label="Cover preview">
-    <canvas id="cover" width="1920" height="1080" aria-label="The cover"></canvas>
+    <h2 class="gallery-title">Try a preset</h2>
+    <div class="gallery" id="gallery">
+      <figure>
+        <canvas class="thumb" data-preset="sunset-boulevard" width="240" height="300"></canvas>
+        <figcaption>Sunset Boulevard</figcaption>
+      </figure>
+      <figure>
+        <canvas class="thumb" data-preset="neon-pier" width="240" height="135"></canvas>
+        <figcaption>Neon Pier</figcaption>
+      </figure>
+      <figure>
+        <canvas class="thumb" data-preset="dusk-mix" width="240" height="240"></canvas>
+        <figcaption>Dusk Mix</figcaption>
+      </figure>
+    </div>
   </section>
 </main>
-<script type="module" src="./src/main.js"></script>
+
+<footer class="foot">
+  <p>Vice Nights Cover Studio &middot; photos stay on your machine &middot; fonts: Noto Sans Display (SIL OFL) &middot; sample photos made for make.fun, free to use</p>
+</footer>
+
+<script type="module" src="src/studio.js"></script>
 </body>
 </html>
