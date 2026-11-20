@@ -1,4 +1,15 @@
-out/
+# Dependencies and build output
 node_modules/
+out/
+dist/
+
+# OS and editor files
 .DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*~
+
+# Logs
 *.log

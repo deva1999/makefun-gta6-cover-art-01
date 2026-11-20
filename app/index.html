@@ -1,150 +1,133 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Vice Nights Cover Studio — GTA 6-style cover art maker</title>
-<meta name="description" content="Vice Nights Cover Studio turns any photo and caption into multi-panel GTA 6-style cover art, offline in your browser, exported as PNG.">
+<title>Vice Nights — Cover Studio</title>
+<link rel="icon" href="data:,">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <header class="topbar">
   <div class="brand">
-    <h1>VICE <span>NIGHTS</span></h1>
-    <p class="brand-sub">Cover Studio &middot; multi-panel poster maker</p>
+    <span class="brand-mark">VN</span>
+    <div>
+      <h1>VICE NIGHTS</h1>
+      <p class="brand-sub">Cover Studio &mdash; GTA-style poster maker</p>
+    </div>
   </div>
-  <p class="top-note">Runs fully offline &middot; photos never leave your machine &middot; all art drawn in code</p>
+  <p class="top-note">100% offline &middot; your photos never leave this machine</p>
 </header>
 
-<main class="layout">
-  <aside class="controls" aria-label="Cover controls">
-    <section class="panel-card" id="panel-card-0">
-      <h2>Panel 1 &middot; Hero</h2>
-      <label class="field">Photo
-        <select id="photo-0" data-panel="0">
-          <option value="scene:neon">Midnight Run &mdash; neon chase</option>
-          <option value="scene:boulevard">Golden Hour &mdash; boulevard glamour</option>
-          <option value="scene:heist">Sunset Score &mdash; sunset heist</option>
-          <option value="upload">Upload a photo&hellip;</option>
+<main class="workspace">
+  <section class="preview-column">
+    <div class="preview-frame">
+      <canvas id="coverCanvas" width="960" height="540"></canvas>
+    </div>
+    <p class="preview-hint" id="sizeLabel">Preview &mdash; 1920 &times; 1080 (wide)</p>
+    <div class="export-row">
+      <button type="button" class="export-btn" data-size="1920x1080">Export 1920 &times; 1080</button>
+      <button type="button" class="export-btn" data-size="1080x1080">Export 1080 &times; 1080</button>
+      <button type="button" class="export-btn" data-size="1080x1350">Export 1080 &times; 1350</button>
+    </div>
+    <p class="status" id="statusLine">Ready. Pick a layout, a grade and your photos, then export.</p>
+  </section>
+
+  <aside class="controls">
+    <section class="control-group" id="layoutGroup">
+      <h2>1 &middot; Layout</h2>
+      <label class="radio-card"><input type="radio" name="layout" value="hero-left" checked> Hero left <span>one big panel, two small</span></label>
+      <label class="radio-card"><input type="radio" name="layout" value="triple-strip"> Triple strip <span>three tall panels</span></label>
+      <label class="radio-card"><input type="radio" name="layout" value="hero-top"> Hero top <span>wide hero, two below</span></label>
+    </section>
+
+    <section class="control-group" id="gradeGroup">
+      <h2>2 &middot; Colour grade</h2>
+      <div class="grade-row">
+        <button type="button" class="grade-btn grade-sunset is-active" data-grade="sunset">Sunset</button>
+        <button type="button" class="grade-btn grade-neon" data-grade="neon">Neon</button>
+        <button type="button" class="grade-btn grade-dusk" data-grade="dusk">Dusk</button>
+      </div>
+    </section>
+
+    <section class="control-group">
+      <h2>3 &middot; Caption</h2>
+      <label class="field-label" for="captionInput">Big caption</label>
+      <input type="text" id="captionInput" value="VICE NIGHTS" maxlength="40">
+      <label class="field-label" for="taglineInput">Tagline</label>
+      <input type="text" id="taglineInput" value="Welcome back to the city that never sleeps" maxlength="80">
+    </section>
+
+    <section class="control-group">
+      <h2>4 &middot; Photos &amp; panels</h2>
+      <p class="group-note">Each panel takes a sample scene or your own photo. Zoom and position crop each panel.</p>
+      <div class="panel-card" data-panel="0">
+        <h3>Panel 1</h3>
+        <label class="field-label" for="panelSource0">Source</label>
+        <select id="panelSource0">
+          <option value="chase" selected>Scene &mdash; Night Chase</option>
+          <option value="boulevard">Scene &mdash; Golden Boulevard</option>
+          <option value="heist">Scene &mdash; Sunset Heist</option>
+          <option value="photo">Your photo&hellip;</option>
         </select>
-      </label>
-      <input type="file" id="file-0" data-panel="0" accept="image/*" hidden>
-      <label class="field">Zoom <span class="val" id="zoom-val-0">100%</span>
-        <input type="range" id="zoom-0" data-panel="0" min="100" max="260" value="100">
-      </label>
-      <label class="field">Move sideways <span class="val" id="ox-val-0">0</span>
-        <input type="range" id="ox-0" data-panel="0" min="-100" max="100" value="0">
-      </label>
-      <label class="field">Move up / down <span class="val" id="oy-val-0">0</span>
-        <input type="range" id="oy-0" data-panel="0" min="-100" max="100" value="0">
-      </label>
-    </section>
+        <label class="field-label" for="panelFile0">Upload photo</label>
+        <input type="file" id="panelFile0" accept="image/*">
+        <label class="field-label" for="panelZoom0">Zoom <span class="slider-value" id="panelZoom0Value">1.00&times;</span></label>
+        <input type="range" id="panelZoom0" min="1" max="2.5" step="0.01" value="1">
+        <label class="field-label" for="panelX0">Position X <span class="slider-value" id="panelX0Value">0</span></label>
+        <input type="range" id="panelX0" min="-0.5" max="0.5" step="0.01" value="0">
+        <label class="field-label" for="panelY0">Position Y <span class="slider-value" id="panelY0Value">0</span></label>
+        <input type="range" id="panelY0" min="-0.5" max="0.5" step="0.01" value="0">
+      </div>
 
-    <section class="panel-card" id="panel-card-1">
-      <h2>Panel 2</h2>
-      <label class="field">Photo
-        <select id="photo-1" data-panel="1">
-          <option value="scene:neon">Midnight Run &mdash; neon chase</option>
-          <option value="scene:boulevard" selected>Golden Hour &mdash; boulevard glamour</option>
-          <option value="scene:heist">Sunset Score &mdash; sunset heist</option>
-          <option value="upload">Upload a photo&hellip;</option>
+      <div class="panel-card" data-panel="1">
+        <h3>Panel 2</h3>
+        <label class="field-label" for="panelSource1">Source</label>
+        <select id="panelSource1">
+          <option value="chase">Scene &mdash; Night Chase</option>
+          <option value="boulevard" selected>Scene &mdash; Golden Boulevard</option>
+          <option value="heist">Scene &mdash; Sunset Heist</option>
+          <option value="photo">Your photo&hellip;</option>
         </select>
-      </label>
-      <input type="file" id="file-1" data-panel="1" accept="image/*" hidden>
-      <label class="field">Zoom <span class="val" id="zoom-val-1">100%</span>
-        <input type="range" id="zoom-1" data-panel="1" min="100" max="260" value="100">
-      </label>
-      <label class="field">Move sideways <span class="val" id="ox-val-1">0</span>
-        <input type="range" id="ox-1" data-panel="1" min="-100" max="100" value="0">
-      </label>
-      <label class="field">Move up / down <span class="val" id="oy-val-1">0</span>
-        <input type="range" id="oy-1" data-panel="1" min="-100" max="100" value="0">
-      </label>
-    </section>
+        <label class="field-label" for="panelFile1">Upload photo</label>
+        <input type="file" id="panelFile1" accept="image/*">
+        <label class="field-label" for="panelZoom1">Zoom <span class="slider-value" id="panelZoom1Value">1.00&times;</span></label>
+        <input type="range" id="panelZoom1" min="1" max="2.5" step="0.01" value="1">
+        <label class="field-label" for="panelX1">Position X <span class="slider-value" id="panelX1Value">0</span></label>
+        <input type="range" id="panelX1" min="-0.5" max="0.5" step="0.01" value="0">
+        <label class="field-label" for="panelY1">Position Y <span class="slider-value" id="panelY1Value">0</span></label>
+        <input type="range" id="panelY1" min="-0.5" max="0.5" step="0.01" value="0">
+      </div>
 
-    <section class="panel-card" id="panel-card-2">
-      <h2>Panel 3</h2>
-      <label class="field">Photo
-        <select id="photo-2" data-panel="2">
-          <option value="scene:neon">Midnight Run &mdash; neon chase</option>
-          <option value="scene:boulevard">Golden Hour &mdash; boulevard glamour</option>
-          <option value="scene:heist" selected>Sunset Score &mdash; sunset heist</option>
-          <option value="upload">Upload a photo&hellip;</option>
+      <div class="panel-card" data-panel="2">
+        <h3>Panel 3</h3>
+        <label class="field-label" for="panelSource2">Source</label>
+        <select id="panelSource2">
+          <option value="chase">Scene &mdash; Night Chase</option>
+          <option value="boulevard">Scene &mdash; Golden Boulevard</option>
+          <option value="heist" selected>Scene &mdash; Sunset Heist</option>
+          <option value="photo">Your photo&hellip;</option>
         </select>
-      </label>
-      <input type="file" id="file-2" data-panel="2" accept="image/*" hidden>
-      <label class="field">Zoom <span class="val" id="zoom-val-2">100%</span>
-        <input type="range" id="zoom-2" data-panel="2" min="100" max="260" value="100">
-      </label>
-      <label class="field">Move sideways <span class="val" id="ox-val-2">0</span>
-        <input type="range" id="ox-2" data-panel="2" min="-100" max="100" value="0">
-      </label>
-      <label class="field">Move up / down <span class="val" id="oy-val-2">0</span>
-        <input type="range" id="oy-2" data-panel="2" min="-100" max="100" value="0">
-      </label>
+        <label class="field-label" for="panelFile2">Upload photo</label>
+        <input type="file" id="panelFile2" accept="image/*">
+        <label class="field-label" for="panelZoom2">Zoom <span class="slider-value" id="panelZoom2Value">1.00&times;</span></label>
+        <input type="range" id="panelZoom2" min="1" max="2.5" step="0.01" value="1">
+        <label class="field-label" for="panelX2">Position X <span class="slider-value" id="panelX2Value">0</span></label>
+        <input type="range" id="panelX2" min="-0.5" max="0.5" step="0.01" value="0">
+        <label class="field-label" for="panelY2">Position Y <span class="slider-value" id="panelY2Value">0</span></label>
+        <input type="range" id="panelY2" min="-0.5" max="0.5" step="0.01" value="0">
+      </div>
+
+      <button type="button" class="fill-all-btn" id="fillAllBtn">Fill all panels with Panel 1&rsquo;s photo</button>
     </section>
 
-    <button id="fill-all" class="wide-btn" type="button">Fill all panels with the selected panel&rsquo;s photo</button>
-
-    <section class="panel-card">
-      <h2>Words</h2>
-      <label class="field">Caption
-        <input type="text" id="caption" value="VICE NIGHTS" maxlength="24">
-      </label>
-      <label class="field">Tagline
-        <input type="text" id="tagline" value="Neon streets. Golden light. One last score." maxlength="64">
-      </label>
-    </section>
-
-    <section class="panel-card">
-      <h2>Layout</h2>
-      <div class="btn-row" role="group" aria-label="Panel layout">
-        <button class="choice" data-layout="hero-left" type="button">Hero left</button>
-        <button class="choice" data-layout="hero-top" type="button">Hero top</button>
-        <button class="choice" data-layout="triple" type="button">Triple strip</button>
-      </div>
-    </section>
-
-    <section class="panel-card">
-      <h2>Colour grade</h2>
-      <div class="btn-row" role="group" aria-label="Colour grade">
-        <button class="choice" data-grade="sunset" type="button">Sunset gold</button>
-        <button class="choice" data-grade="neon" type="button">Neon nights</button>
-        <button class="choice" data-grade="dusk" type="button">Dusk noir</button>
-      </div>
-    </section>
-
-    <section class="panel-card">
-      <h2>Post size</h2>
-      <div class="btn-row" role="group" aria-label="Post size">
-        <button class="choice" data-size="wide" type="button">Wide 1920&times;1080</button>
-        <button class="choice" data-size="square" type="button">Square 1080&times;1080</button>
-        <button class="choice" data-size="portrait" type="button">Portrait 1080&times;1350</button>
-      </div>
-      <div class="export-row">
-        <button id="export-wide" class="export-btn" type="button">Export wide PNG</button>
-        <button id="export-square" class="export-btn" type="button">Export square PNG</button>
-        <button id="export-portrait" class="export-btn" type="button">Export portrait PNG</button>
-      </div>
-      <p class="hint">Exports are real PNG files at full post size, saved to your machine.</p>
+    <section class="control-group about">
+      <h2>About</h2>
+      <p>Vice Nights turns any photo into a multi-panel GTA-style cover: three panels, bold condensed lettering, a Vice City sunset or neon grade, exported as a PNG in 1920&times;1080, 1080&times;1080 or 1080&times;1350. All artwork is drawn procedurally in your browser &mdash; no uploads, no watermark, no account. Lettering uses Noto Sans Display Condensed under the SIL Open Font License.</p>
     </section>
   </aside>
-
-  <section class="stage" aria-label="Live preview">
-    <div class="stage-head">
-      <h2>Live preview</h2>
-      <p id="selected-label">Selected: Panel 1 &middot; Hero</p>
-    </div>
-    <canvas id="preview" width="960" height="540"></canvas>
-    <p class="hint">Click a panel to select it, then drag it to move the photo and scroll to zoom. Sliders do the same, precisely.</p>
-    <p class="hint" id="status-line" role="status">Loading studio&hellip;</p>
-  </section>
 </main>
 
-<footer class="foot">
-  <p>Vice Nights Cover Studio &mdash; original art drawn in code. No game artwork, logos or fonts; lettering is Noto Sans Display (SIL Open Font License) shipped under <code>app/fonts</code>.</p>
-</footer>
-
-<script src="src/studio.js" defer></script>
+<script src="src/studio.js"></script>
 </body>
 </html>
